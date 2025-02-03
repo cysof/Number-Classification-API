@@ -5,6 +5,7 @@ import httpx
 import math
 from functools import lru_cache
 import logging
+import re
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -64,40 +65,48 @@ def get_fun_fact(number: int) -> str:
     except httpx.RequestError as e:
         return f"Could not fetch fun fact (error: {str(e)})."
 
-def classify_number(n: int) -> dict:
+def classify_number(n: int):
     """Classify the number and return its properties."""
     properties = []
     if is_armstrong(n):
         properties.append("armstrong")
     if n % 2 != 0:
         properties.append("odd")
-    else:
-        properties.append("even")
 
     return {
         "number": n,
         "is_prime": is_prime(n),
         "is_perfect": is_perfect(n),
         "properties": properties,
-        "digit_sum": sum(int(digit) for digit in str(n))
+        "digit_sum": sum(int(digit) for digit in str(n)),
     }
+
+# Input Validation
+def validate_number(input: str) -> int:
+    """Validate the input to ensure it is a positive integer."""
+    if not re.match(r"^\d+$", input):  # Check if the input is a valid integer
+        raise ValueError("Input must be a valid positive integer.")
+    number = int(input)
+    if number <= 0:
+        raise ValueError("Input must be a positive integer.")
+    return number
 
 # API Endpoint
 @app.get("/api/classify-number")
-async def classify(number: int = Query(..., description="Number to classify", gt=0)):
+async def classify(number: str = Query(..., description="Number to classify")):
     """Classify a number as prime, perfect, odd, or none of the above."""
     try:
-        if number <= 0:
-            raise ValueError("Input must be a positive integer.")
+        # Validate the input
+        number_int = validate_number(number)
 
         # Classify the number and fetch its properties
-        classification = classify_number(number)
-        classification["fun_fact"] = get_fun_fact(number)  # Fetch fun fact
+        classification = classify_number(number_int)
+        classification["fun_fact"] = get_fun_fact(number_int)  # Fetch fun fact
         return JSONResponse(content=classification, status_code=200)
-    except ValueError as e:
-        # Handle invalid input (e.g., non-positive numbers)
+    except ValueError:
+        # Handle invalid input (e.g., negative numbers, decimals, or non-numeric input)
         return JSONResponse(
-            content={"number": str(number), "error": True, "message": str(e)},
+            content={"number": number, "error": True},
             status_code=400,
         )
     except Exception as e:
@@ -111,4 +120,5 @@ async def http_exception_handler(request, exc):
     """Handle HTTP exceptions gracefully."""
     logger.error(f"HTTPException: {exc.detail}")
     return JSONResponse(
-        content={"error": True, "message": exc.detail}, status_code=exc.status_code)
+        content={"error": True, "message": exc.detail}, status_code=exc.status_code
+    )
