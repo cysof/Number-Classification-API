@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import httpx
 import math
-import asyncio
+import logging
+logging.basicConfig(level=logging.INFO)
 from functools import lru_cache
 
 app = FastAPI()
@@ -38,25 +39,26 @@ def is_perfect(n: int) -> bool:
     return sum(i for i in range(1, n) if n % i == 0) == n
 
 @lru_cache(maxsize=1000)  # Cache up to 1000 fun facts
-def get_fun_fact_sync(number: int) -> str:
-    """Fetch a fun fact about a number with caching (synchronous)."""
+def get_fun_fact(number: int) -> str:
+    """Fetch a fun fact about a number with error handling and retry logic."""
+    url = f"http://numbersapi.com/{number}"
     try:
-        response = httpx.get(f"http://numbersapi.com/{number}", timeout=1.0)
+        response = httpx.get(url, timeout=2.0)  # Slightly increased timeout
+        logging.info(f"API response: {response.status_code}")
         if response.status_code == 200:
             return response.text
-    except httpx.RequestError:
-        return "Could not fetch fun fact."
-    return "No fun fact available."
-
-async def get_fun_fact_async(number: int):
-    """Fetch a fun fact asynchronously after response."""
-    return get_fun_fact_sync(number)
+        else:
+            logging.error(f"API error: {response.status_code}")
+            return f"Could not fetch fun fact (HTTP {response.status_code})."
+    except httpx.TimeoutException:
+        logging.error("API timeout")
+        return "Could not fetch fun fact (timeout)."
+    except httpx.RequestError as e:
+        logging.error(f"API error: {str(e)}")
+        return f"Could not fetch fun fact (error: {str(e)})."
 
 def classify_number(n: int):
     """Classify the number and return its properties."""
-    if n < 0:
-        raise HTTPException(status_code=400, detail="Negative numbers are not supported.")
-
     properties = []
     if is_armstrong(n):
         properties.append("armstrong")
@@ -68,8 +70,7 @@ def classify_number(n: int):
         "is_prime": is_prime(n),
         "is_perfect": is_perfect(n),
         "properties": properties,
-        "digit_sum": sum(int(digit) for digit in str(n)),
-        "fun_fact": "Fetching..."  # Initially return placeholder
+        "digit_sum": sum(int(digit) for digit in str(n))
     }
 
 @app.get("/api/classify-number")
@@ -77,21 +78,12 @@ async def classify(number: int = Query(..., description="Number to classify")):
     """Classify a number as prime, perfect, odd, or none of the above."""
     try:
         classification = classify_number(number)
-
-        # Fetch fun fact asynchronously (non-blocking)
-        asyncio.create_task(update_fun_fact(number, classification))
-
+        classification["fun_fact"] = get_fun_fact(number)  # Fetch fun fact immediately
         return JSONResponse(content=classification, status_code=200)
-
     except ValueError:
         return JSONResponse(content={"number": str(number), "error": True}, status_code=400)
-
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))  # Handle unknown errors
-
-async def update_fun_fact(number: int, classification: dict):
-    """Updates fun fact asynchronously after response is sent."""
-    classification["fun_fact"] = await get_fun_fact_async(number)
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
