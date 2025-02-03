@@ -1,7 +1,7 @@
 import requests
 import time
 
-url = "https://number-classification-api-zf81.onrender.com/api/classify-number?number=371"
+url = "http://127.0.0.1:8000/api/classify-number?number=371"
 
 start_time = time.time()  # Record start time
 response = requests.get(url)
