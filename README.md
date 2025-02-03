@@ -46,7 +46,7 @@ The Number Classification API classifies numbers based on their mathematical pro
 5. **Access the API**
    - Open `http://127.0.0.1:8000/docs` for interactive API documentation.
    - Open `http://127.0.0.1:8000/api/classify-number?number=371` for a sample response.
-   - Open `https://number-classification-api-zf81.onrender.com/api/classify-number?number=371`
+   - Open `https://number-classification-api-zf81.onrender.com/api/classify-number`
 
 ## API Endpoints
 

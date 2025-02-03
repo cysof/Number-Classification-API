@@ -5,25 +5,21 @@ import math
 
 app = FastAPI()
 
-# making sure CORS IS ENABLE
-
+# Ensuring CORS is enabled
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = ["*"],
-    allow_credentials = True,
-    allow_methods = ["*"],
-    allow_headers = ["*"],
-    
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 def is_prime(n: int) -> bool:
-
     """
     Return True if n is a prime number, False otherwise.
 
     A prime number is a positive integer that is divisible only by itself and 1.
     """
-    
     if n < 2:
         return False
     for i in range(2, int(math.sqrt(n)) + 1):
@@ -36,7 +32,6 @@ def is_armstrong(n: int) -> bool:
     Return True if n is an Armstrong number, False otherwise.
     An Armstrong number is one for which the sum of the k-th powers of its digits is equal to the number itself.
     """
-    
     _digits = [int(d) for d in str(n)]
     return sum(d ** len(_digits) for d in _digits) == n
 
@@ -45,9 +40,7 @@ def is_perfect(n: int) -> bool:
     Return True if n is a perfect number, False otherwise.
     A perfect number is an integer that is equal to the sum of its proper divisors, excluding itself.
     """
-    
     return sum(i for i in range(1, n) if n % i == 0) == n
-
 
 def classify_number(n: int):
     """
@@ -55,7 +48,6 @@ def classify_number(n: int):
     whether it is prime, whether it is perfect, a list of properties (odd,
     armstrong, etc.), and the sum of its digits.
     """
-    
     properties = []
     if is_armstrong(n):
         properties.append("armstrong")
@@ -69,8 +61,8 @@ def classify_number(n: int):
         "digit_sum": sum(int(digit) for digit in str(n))
     }
 
-@app.get("/api/classify-number?number=371")
-async def classify(number: int = Query(..., description = "Number to classify")):
+@app.get("/api/classify-number")
+async def classify(number: int = Query(..., description="Number to classify")):
     """
     Classify a number as prime, perfect, odd, or none of the above.
     
@@ -121,4 +113,4 @@ async def value_error_handle(request, exc):
             - `number`: The number that caused the error.
             - `error`: A boolean indicating that an error occurred.
     """
-    return {"number": str(exc), "error":True}
+    return {"number": str(exc), "error": True}
