@@ -69,7 +69,7 @@ def classify_number(n: int):
         "digit_sum": sum(int(digit) for digit in str(n))
     }
 
-@app.get("/api/classify-number")
+@app.get("/number-classification-api-zf81.onrender.com/api/classify-number")
 async def classify(number: int = Query(..., description = "Number to classify")):
     """
     Classify a number as prime, perfect, odd, or none of the above.
