@@ -85,6 +85,7 @@ The Number Classification API classifies numbers based on their mathematical pro
    uvicorn main:app --host 0.0.0.0 --port 10000
    ```
 4. Deploy and get your public API URL.
+ - Open `https://number-classification-api-zf81.onrender.com/api/classify-number?number=-371`
 
 ## Testing
 - Use **Postman** or `curl` to send requests and verify responses.
