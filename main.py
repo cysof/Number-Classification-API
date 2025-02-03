@@ -81,8 +81,9 @@ async def classify(number: int = Query(..., description="Number to classify")):
     classification = classify_number(number)
     fun_fact = ""
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(f'http://numbersapi.com/{number}')
+        async with httpx.AsyncClient(timeout=1.0) as client:
+            response = await client.get(f"http://numbersapi.com/{number}")
+
             if response.status_code == 200:
                 fun_fact = response.text
     except Exception as e:
