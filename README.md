@@ -26,7 +26,7 @@ The Number Classification API classifies numbers based on their mathematical pro
 ### Setup Instructions
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/number-classification-api.git
+   git clone https://github.com/cysof/number-classification-api.git
    cd number-classification-api
    ```
 2. **Create a virtual environment and activate it**
