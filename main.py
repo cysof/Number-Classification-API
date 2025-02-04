@@ -32,7 +32,7 @@ def is_prime(n: int) -> bool:
         return True
     if n % 2 == 0:
         return False
-    for i in range(3, int(math.sqrt(n)) + 1, 2):  # Skip even numbers
+    for i in range(3, int(math.sqrt(abs(n))) + 1, 2):  # Use absolute value for negative numbers
         if n % i == 0:
             return False
     return True
@@ -40,8 +40,8 @@ def is_prime(n: int) -> bool:
 @lru_cache(maxsize=1000)  # Cache results for performance
 def is_armstrong(n: int) -> bool:
     """Check if a number is an Armstrong number."""
-    digits = [int(d) for d in str(n)]
-    return sum(d ** len(digits) for d in digits) == n
+    digits = [int(d) for d in str(abs(n))]  # Use absolute value for negative numbers
+    return sum(d ** len(digits) for d in digits) == abs(n)
 
 @lru_cache(maxsize=1000)  # Cache results for performance
 def is_perfect(n: int) -> bool:
@@ -78,18 +78,15 @@ def classify_number(n: int):
         "is_prime": is_prime(n),
         "is_perfect": is_perfect(n),
         "properties": properties,
-        "digit_sum": sum(int(digit) for digit in str(n)),
+        "digit_sum": sum(int(digit) for digit in str(abs(n))),  # Use absolute value for digit sum
     }
 
 # Input Validation
 def validate_number(input: str) -> int:
-    """Validate the input to ensure it is a positive integer."""
-    if not re.match(r"^\d+$", input):  # Check if the input is a valid integer
-        raise ValueError("Input must be a valid positive integer.")
-    number = int(input)
-    if number <= 0:
-        raise ValueError("Input must be a positive integer.")
-    return number
+    """Validate the input to ensure it is a valid integer."""
+    if not re.match(r"^-?\d+$", input):  # Allow negative numbers
+        raise ValueError("Input must be a valid integer.")
+    return int(input)
 
 # API Endpoint
 @app.get("/api/classify-number")
@@ -104,7 +101,7 @@ async def classify(number: str = Query(..., description="Number to classify")):
         classification["fun_fact"] = get_fun_fact(number_int)  # Fetch fun fact
         return JSONResponse(content=classification, status_code=200)
     except ValueError:
-        # Handle invalid input (e.g., negative numbers, decimals, or non-numeric input)
+        # Handle invalid input (e.g., decimals or non-numeric input)
         return JSONResponse(
             content={"number": number, "error": True},
             status_code=400,
